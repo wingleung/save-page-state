@@ -1,0 +1,36 @@
+{
+  "name": "save-page-state",
+  "version": "1.0.1",
+  "description": "Chrome extension to save a state of a page for remote analysis",
+  "scripts": {
+    "build": "mkdir -p ./build/prod && npx webpack --config ./config/webpack.config.prod.js",
+    "start": "mkdir -p ./build/dev && npx webpack --config ./config/webpack.config.dev.js",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,json,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "author": "Wing Leung",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "babel-loader": "^8.0.4",
+    "copy-webpack-plugin": "^4.6.0",
+    "husky": "^1.2.0",
+    "lint-staged": "^8.1.0",
+    "lodash": "^4.17.11",
+    "prettier": "^1.15.3",
+    "uglifyjs-webpack-plugin": "^2.0.1",
+    "webpack": "^4.27.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-version-file-plugin": "^0.3.3"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.0",
+    "jszip": "^3.1.5"
+  }
+}
