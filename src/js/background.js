@@ -3,21 +3,58 @@ import saveAs from 'file-saver'
 
 import {
   getTimestamp,
-  getChromeVersion,
+  getBrowserData,
   formatJSONtoPlain,
   base64toBlob
 } from './helpers'
 
+window.browser = window.browser || window.chrome
+
+let browserData = null
 let pageTitle = null
 let currentTab = null
 let metaData = null
 
-const generatePageStateZip = dom => {
-  const file = new Blob([dom], { type: 'text/html' })
-  const fileName = `snapshot_${getTimestamp()}_${pageTitle.replace(
+const getFileName = () =>
+  `snapshot_${getTimestamp()}_${pageTitle.replace(
     /[<>:"\/\\|?*\x00-\x1F ]/g,
     '_'
   )}`
+
+const getImageBlob = image =>
+  base64toBlob(image.replace(/^data:image\/\w+;base64,/, ''), 'image/jpeg')
+
+const captureVisibleTab = () =>
+  browserData.isChrome
+    ? new Promise(resolve => {
+        browser.tabs.captureVisibleTab(null, {}, image => resolve(image))
+      })
+    : browser.tabs.captureVisibleTab()
+
+const generateMHTML = () =>
+  new Promise(resolve => {
+    chrome.pageCapture.saveAsMHTML({ tabId: currentTab }, htmlData => {
+      resolve(htmlData)
+    })
+  })
+
+const downloadFile = (blob, fileName) => {
+  if (browserData.isChrome) {
+    saveAs(blob, fileName)
+  } else {
+    browser.tabs.sendMessage(currentTab, {
+      action: 'saveFile',
+      file: {
+        content: blob,
+        name: fileName
+      }
+    })
+  }
+}
+
+const generatePageStateZip = async dom => {
+  const file = new Blob([dom], { type: 'text/html' })
+  const fileName = getFileName()
 
   const zipArchive = new JSZip()
   const zipRoot = zipArchive.folder(fileName)
@@ -25,24 +62,20 @@ const generatePageStateZip = dom => {
   zipRoot.file('dom/snapshot.html', file)
   zipRoot.file('metadata.txt', formatJSONtoPlain(metaData))
 
-  chrome.pageCapture.saveAsMHTML({ tabId: currentTab }, htmlData => {
+  const image = await captureVisibleTab()
+  zipRoot.file('screenshot.png', getImageBlob(image))
+
+  if (browserData.isChrome) {
+    const htmlData = await generateMHTML()
     zipRoot.file('layout/snapshot.mhtml', htmlData)
+  }
 
-    chrome.tabs.captureVisibleTab(null, {}, image => {
-      const imageBlob = base64toBlob(
-        image.replace(/^data:image\/\w+;base64,/, ''),
-        'image/jpeg'
-      )
-      zipRoot.file('screenshot.png', imageBlob)
-
-      zipArchive.generateAsync({ type: 'blob' }).then(content => {
-        saveAs(content, `${fileName}.zip`)
-      })
-    })
-  })
+  const blob = await zipArchive.generateAsync({ type: 'blob' })
+  downloadFile(blob, `${fileName}.zip`)
 }
 
 const savePageState = tab => {
+  browserData = getBrowserData()
   pageTitle = tab.title
   currentTab = tab.id
   metaData = {
@@ -52,22 +85,24 @@ const savePageState = tab => {
     status: tab.status,
     title: tab.title,
     url: tab.url,
-    chromeVersion: getChromeVersion()
+    browser: browserData.name,
+    browserVersion: browserData.version,
+    os: browserData.os
   }
 
-  chrome.tabs.sendMessage(tab.id, { action: 'captureDOM' })
+  browser.tabs.sendMessage(tab.id, { action: 'captureDOM' })
 }
 
 const handleBackgroundAction = ({ action, dom }) => {
   switch (action) {
     case 'captureDOM':
-      generatePageStateZip(dom)
+      generatePageStateZip(dom).then(() => console.log('downloaded page state'))
       break
     default:
       break
   }
 }
 
-chrome.browserAction.onClicked.addListener(savePageState)
+browser.browserAction.onClicked.addListener(savePageState)
 
-chrome.runtime.onMessage.addListener(handleBackgroundAction)
+browser.runtime.onMessage.addListener(handleBackgroundAction)

@@ -1,10 +1,13 @@
 {
   "name": "save-page-state",
-  "version": "1.0.1",
-  "description": "Chrome extension to save a state of a page for remote analysis",
+  "version": "1.1.1",
+  "description": "Extension to save a state of a page for remote analysis",
   "scripts": {
-    "build": "mkdir -p ./build/prod && npx webpack --config ./config/webpack.config.prod.js",
-    "start": "mkdir -p ./build/dev && npx webpack --config ./config/webpack.config.dev.js",
+    "build": "npm run build:chrome && npm run build:firefox",
+    "build:chrome": "mkdir -p ./build/prod && mkdir -p ./build/prod/chrome && npx webpack --env.vendor=chrome --config ./config/webpack.config.prod.js",
+    "build:firefox": "mkdir -p ./build/prod && mkdir -p ./build/prod/firefox && npx webpack --env.vendor=firefox --config ./config/webpack.config.prod.js",
+    "dev:chrome": "mkdir -p ./build/dev && mkdir -p ./build/dev/chrome && npx webpack --env.vendor=chrome --config ./config/webpack.config.dev.js",
+    "dev:firefox": "mkdir -p ./build/dev && mkdir -p ./build/dev/firefox  && npx webpack --env.vendor=firefox --config ./config/webpack.config.dev.js",
     "precommit": "lint-staged"
   },
   "lint-staged": {
@@ -16,8 +19,10 @@
   "author": "Wing Leung",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.2.0",
-    "@babel/preset-env": "^7.2.0",
+    "@babel/core": "^7.4.4",
+    "@babel/plugin-transform-runtime": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "@babel/runtime": "^7.4.4",
     "babel-loader": "^8.0.4",
     "copy-webpack-plugin": "^4.6.0",
     "husky": "^1.2.0",
@@ -27,10 +32,11 @@
     "uglifyjs-webpack-plugin": "^2.0.1",
     "webpack": "^4.27.1",
     "webpack-cli": "^3.1.2",
-    "webpack-version-file-plugin": "^0.3.3"
+    "webpack-version-file-plugin": "github:mvanede/webpack-version-file-plugin"
   },
   "dependencies": {
-    "file-saver": "^2.0.0",
-    "jszip": "^3.1.5"
+    "detect-browser": "^4.5.0",
+    "file-saver": "^2.0.2",
+    "jszip": "^3.2.1"
   }
 }

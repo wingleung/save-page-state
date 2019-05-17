@@ -10,9 +10,9 @@
   "background": { "scripts": ["js/background.js"] },
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
+      "matches": ["<all_urls>"],
       "js": ["js/content.js"]
     }
   ],
-  "permissions": ["activeTab", "pageCapture", "*://*/*"]
+  "permissions": ["<all_urls>", "activeTab"]
 }

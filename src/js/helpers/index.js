@@ -1,3 +1,5 @@
+const { detect } = require('detect-browser')
+
 const getTimestamp = () => {
   const time = new Date()
   const months = [
@@ -26,9 +28,13 @@ const getTimestamp = () => {
   return `${date + month}_${hour}${min}${sec}`
 }
 
-const getChromeVersion = () => {
-  const match = window.navigator.userAgent.match(/Chrom(?:e|ium)\/([0-9\.]+)/)
-  return match ? match[1] : null
+const getBrowserData = () => {
+  const browserData = detect() || {}
+
+  return {
+    ...browserData,
+    isChrome: browserData.name === 'chrome'
+  }
 }
 
 const formatJSONtoPlain = jsonData => {
@@ -96,7 +102,7 @@ const DOMtoString = document_root => {
 
 export {
   getTimestamp,
-  getChromeVersion,
+  getBrowserData,
   formatJSONtoPlain,
   base64toBlob,
   DOMtoString
